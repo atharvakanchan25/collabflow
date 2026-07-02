@@ -1,4 +1,4 @@
-// Pair-programmed with Antigravity AI assistant
+// Pair-programmed with Antigravity and atharvakanchan25
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
