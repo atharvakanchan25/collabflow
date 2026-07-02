@@ -10,8 +10,15 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>(set => ({
-  user: null,
-  accessToken: localStorage.getItem('accessToken'),
+  user: {
+    id: 'mock-user-id',
+    username: 'john_doe',
+    email: 'john@example.com',
+    displayName: 'John Doe',
+    avatarUrl: null,
+    status: 'ONLINE',
+  },
+  accessToken: localStorage.getItem('accessToken') || 'mock-access-token',
   setAuth: (user, accessToken, refreshToken) => {
     localStorage.setItem('accessToken', accessToken)
     localStorage.setItem('refreshToken', refreshToken)

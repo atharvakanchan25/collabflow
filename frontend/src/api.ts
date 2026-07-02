@@ -32,84 +32,208 @@ api.interceptors.response.use(
   }
 )
 
+// Mock Data
+const mockUser = {
+  id: 'mock-user-id',
+  username: 'john_doe',
+  email: 'john@example.com',
+  displayName: 'John Doe',
+  avatarUrl: null,
+  status: 'ONLINE'
+}
+
+const mockWorkspaces = [
+  { id: 'ws-1', name: 'General Workspace', slug: 'general', ownerId: 'mock-user-id', createdAt: new Date().toISOString() }
+]
+
+const mockChannels = [
+  { id: 'ch-1', workspaceId: 'ws-1', name: 'general', description: 'Company-wide announcements and work-based matters', isPrivate: false, createdAt: new Date().toISOString() },
+  { id: 'ch-2', workspaceId: 'ws-1', name: 'random', description: 'Non-work banter and watercooler chat', isPrivate: false, createdAt: new Date().toISOString() }
+]
+
+const mockConversations = [
+  {
+    id: 'conv-1',
+    workspaceId: 'ws-1',
+    participants: [
+      mockUser,
+      { id: 'user-2', username: 'jane_smith', email: 'jane@example.com', displayName: 'Jane Smith', avatarUrl: null, status: 'ONLINE' }
+    ],
+    createdAt: new Date().toISOString()
+  }
+]
+
+let mockMessages: Record<string, any[]> = {
+  'ch-1': [
+    {
+      id: 'msg-1',
+      channelId: 'ch-1',
+      sender: { id: 'user-2', username: 'jane_smith', email: '', displayName: 'Jane Smith', avatarUrl: null, status: 'ONLINE' },
+      content: 'Hey everyone! Welcome to CollabHub.',
+      messageType: 'TEXT',
+      parentId: null,
+      attachments: [],
+      reactions: [],
+      editedAt: null,
+      createdAt: new Date(Date.now() - 600000).toISOString()
+    },
+    {
+      id: 'msg-2',
+      channelId: 'ch-1',
+      sender: mockUser,
+      content: 'Hi Jane, glad to be here!',
+      messageType: 'TEXT',
+      parentId: null,
+      attachments: [],
+      reactions: [],
+      editedAt: null,
+      createdAt: new Date(Date.now() - 300000).toISOString()
+    }
+  ]
+}
+
 // Auth
 export const authApi = {
-  register: (d: { username: string; email: string; password: string; displayName?: string }) =>
-    api.post('/auth/register', d).then(r => r.data),
-  login: (d: { email: string; password: string }) =>
-    api.post('/auth/login', d).then(r => r.data),
+  register: async (d: any) => ({ user: mockUser, accessToken: 'mock-access-token', refreshToken: 'mock-refresh-token' }),
+  login: async (d: any) => ({ user: mockUser, accessToken: 'mock-access-token', refreshToken: 'mock-refresh-token' }),
 }
 
 // Users
 export const usersApi = {
-  me: () => api.get('/users/me').then(r => r.data),
-  get: (id: string) => api.get(`/users/${id}`).then(r => r.data),
-  updateProfile: (d: { displayName?: string; avatarUrl?: string }) =>
-    api.patch('/users/me', d).then(r => r.data),
+  me: async () => mockUser,
+  get: async (id: string) => id === 'mock-user-id' ? mockUser : { id, username: 'jane_smith', email: 'jane@example.com', displayName: 'Jane Smith', avatarUrl: null, status: 'ONLINE' },
+  updateProfile: async (d: any) => ({ ...mockUser, ...d }),
 }
 
 // Workspaces
 export const workspacesApi = {
-  list: () => api.get('/workspaces').then(r => r.data),
-  create: (d: { name: string; slug: string }) => api.post('/workspaces', d).then(r => r.data),
-  getBySlug: (slug: string) => api.get(`/workspaces/${slug}`).then(r => r.data),
-  getMembers: (id: string) => api.get(`/workspaces/${id}/members`).then(r => r.data),
-  addMember: (workspaceId: string, targetUserId: string) =>
-    api.post(`/workspaces/${workspaceId}/members/${targetUserId}`).then(r => r.data),
+  list: async () => mockWorkspaces,
+  create: async (d: any) => {
+    const ws = { id: `ws-${Date.now()}`, name: d.name, slug: d.slug, ownerId: 'mock-user-id', createdAt: new Date().toISOString() }
+    mockWorkspaces.push(ws)
+    return ws
+  },
+  getBySlug: async (slug: string) => mockWorkspaces.find(w => w.slug === slug) ?? mockWorkspaces[0],
+  getMembers: async (id: string) => [
+    mockUser,
+    { id: 'user-2', username: 'jane_smith', email: 'jane@example.com', displayName: 'Jane Smith', avatarUrl: null, status: 'ONLINE' }
+  ],
+  addMember: async (workspaceId: string, targetUserId: string) => ({ success: true }),
 }
 
 // Channels
 export const channelsApi = {
-  list: (workspaceId: string) =>
-    api.get(`/workspaces/${workspaceId}/channels`).then(r => r.data),
-  create: (workspaceId: string, d: { name: string; description?: string; isPrivate: boolean }) =>
-    api.post(`/workspaces/${workspaceId}/channels`, d).then(r => r.data),
-  join: (channelId: string) => api.post(`/workspaces/_/channels/${channelId}/join`).then(r => r.data),
-  leave: (channelId: string) => api.delete(`/workspaces/_/channels/${channelId}/leave`),
-  getMembers: (channelId: string) =>
-    api.get(`/workspaces/_/channels/${channelId}/members`).then(r => r.data),
+  list: async (workspaceId: string) => mockChannels,
+  create: async (workspaceId: string, d: any) => {
+    const ch = { id: `ch-${Date.now()}`, workspaceId, name: d.name, description: d.description, isPrivate: d.isPrivate, createdAt: new Date().toISOString() }
+    mockChannels.push(ch)
+    return ch
+  },
+  join: async (channelId: string) => ({ success: true }),
+  leave: async (channelId: string) => ({ success: true }),
+  getMembers: async (channelId: string) => [
+    mockUser,
+    { id: 'user-2', username: 'jane_smith', email: 'jane@example.com', displayName: 'Jane Smith', avatarUrl: null, status: 'ONLINE' }
+  ],
 }
 
 // Messages
 export const messagesApi = {
-  getChannel: (channelId: string, page = 0) =>
-    api.get(`/channels/${channelId}/messages`, { params: { page, size: 50 } }).then(r => r.data),
-  sendChannel: (channelId: string, content: string, parentId?: string) =>
-    api.post(`/channels/${channelId}/messages`, { content, parentId }).then(r => r.data),
-  getConversation: (convId: string, page = 0) =>
-    api.get(`/conversations/${convId}/messages`, { params: { page, size: 50 } }).then(r => r.data),
-  sendConversation: (convId: string, content: string) =>
-    api.post(`/conversations/${convId}/messages`, { content }).then(r => r.data),
-  edit: (messageId: string, content: string) =>
-    api.patch(`/messages/${messageId}`, { content }).then(r => r.data),
-  delete: (messageId: string) => api.delete(`/messages/${messageId}`),
-  react: (messageId: string, emoji: string) =>
-    api.post(`/messages/${messageId}/reactions/${emoji}`).then(r => r.data),
-  getReplies: (messageId: string) =>
-    api.get(`/messages/${messageId}/replies`).then(r => r.data),
+  getChannel: async (channelId: string, page = 0) => ({ content: mockMessages[channelId] ?? [] }),
+  sendChannel: async (channelId: string, content: string, parentId?: string) => {
+    const msg = {
+      id: `msg-${Date.now()}`,
+      channelId,
+      sender: mockUser,
+      content,
+      messageType: 'TEXT',
+      parentId: parentId ?? null,
+      attachments: [],
+      reactions: [],
+      editedAt: null,
+      createdAt: new Date().toISOString()
+    }
+    if (!mockMessages[channelId]) mockMessages[channelId] = []
+    mockMessages[channelId].push(msg)
+    return msg
+  },
+  getConversation: async (convId: string, page = 0) => ({ content: mockMessages[convId] ?? [] }),
+  sendConversation: async (convId: string, content: string) => {
+    const msg = {
+      id: `msg-${Date.now()}`,
+      conversationId: convId,
+      sender: mockUser,
+      content,
+      messageType: 'TEXT',
+      parentId: null,
+      attachments: [],
+      reactions: [],
+      editedAt: null,
+      createdAt: new Date().toISOString()
+    }
+    if (!mockMessages[convId]) mockMessages[convId] = []
+    mockMessages[convId].push(msg)
+    return msg
+  },
+  edit: async (messageId: string, content: string) => {
+    for (const key in mockMessages) {
+      const idx = mockMessages[key].findIndex(m => m.id === messageId)
+      if (idx !== -1) {
+        mockMessages[key][idx] = {
+          ...mockMessages[key][idx],
+          content,
+          editedAt: new Date().toISOString()
+        }
+        return mockMessages[key][idx]
+      }
+    }
+    return {
+      id: messageId,
+      channelId: null,
+      conversationId: null,
+      sender: mockUser,
+      content,
+      messageType: 'TEXT',
+      parentId: null,
+      attachments: [],
+      reactions: [],
+      editedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    }
+  },
+  delete: async (messageId: string) => ({ success: true }),
+  react: async (messageId: string, emoji: string) => ({ success: true }),
+  getReplies: async (messageId: string) => [],
 }
 
 // Conversations (DMs)
 export const conversationsApi = {
-  list: (workspaceId: string) =>
-    api.get(`/workspaces/${workspaceId}/conversations`).then(r => r.data),
-  open: (workspaceId: string, targetUserId: string) =>
-    api.post(`/workspaces/${workspaceId}/conversations`, { targetUserId }).then(r => r.data),
+  list: async (workspaceId: string) => mockConversations,
+  open: async (workspaceId: string, targetUserId: string) => {
+    const conv = {
+      id: `conv-${Date.now()}`,
+      workspaceId,
+      participants: [
+        mockUser,
+        { id: targetUserId, username: 'user_target', email: '', displayName: 'Target User', avatarUrl: null, status: 'ONLINE' }
+      ],
+      createdAt: new Date().toISOString()
+    }
+    mockConversations.push(conv)
+    return conv
+  },
 }
 
 // Files
 export const filesApi = {
-  upload: (messageId: string, file: File) => {
-    const form = new FormData()
-    form.append('file', file)
-    return api.post(`/files/messages/${messageId}`, form).then(r => r.data)
-  },
+  upload: async (messageId: string, file: File) => ({ id: 'file-1', url: 'https://via.placeholder.com/150', name: file.name }),
 }
 
 // Notifications
 export const notificationsApi = {
-  list: (page = 0) => api.get('/notifications', { params: { page, size: 20 } }).then(r => r.data),
-  unreadCount: () => api.get('/notifications/unread-count').then(r => r.data),
-  markAllRead: () => api.post('/notifications/read-all'),
-  markRead: (id: string) => api.patch(`/notifications/${id}/read`),
+  list: async (page = 0) => ({ content: [] }),
+  unreadCount: async () => ({ count: 0 }),
+  markAllRead: async () => ({ success: true }),
+  markRead: async (id: string) => ({ success: true }),
 }
+

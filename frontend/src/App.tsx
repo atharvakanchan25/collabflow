@@ -8,14 +8,10 @@ import { MainLayout } from './pages/MainLayout'
 import { NotFoundPage } from './pages/NotFoundPage'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { accessToken } = useAuthStore()
-  if (!accessToken) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
 function GuestGuard({ children }: { children: React.ReactNode }) {
-  const { accessToken } = useAuthStore()
-  if (accessToken) return <Navigate to="/" replace />
   return <>{children}</>
 }
 

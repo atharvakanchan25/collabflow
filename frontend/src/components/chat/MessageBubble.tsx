@@ -82,7 +82,7 @@ export function MessageBubble({ message, onReply, onUpdated, onDeleted }: Props)
         )}
 
         {/* Attachments */}
-        {message.attachments.length > 0 && (
+        {(message.attachments?.length ?? 0) > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {message.attachments.map(a => (
               <a key={a.id} href={a.downloadUrl} target="_blank" rel="noreferrer"
@@ -94,7 +94,7 @@ export function MessageBubble({ message, onReply, onUpdated, onDeleted }: Props)
         )}
 
         {/* Reactions */}
-        {message.reactions.length > 0 && (
+        {(message.reactions?.length ?? 0) > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1">
             {message.reactions.map(r => (
               <button
